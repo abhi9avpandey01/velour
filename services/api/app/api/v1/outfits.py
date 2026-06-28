@@ -9,7 +9,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_outfit_repository
 from app.db.session import get_db_session
 from app.models.user import User
 from app.repositories.outfit_repository import OutfitRepository
@@ -28,10 +28,9 @@ async def list_outfits(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    repo: OutfitRepository = Depends(get_outfit_repository),
 ) -> ApiResponse[List[OutfitSchema]]:
     """Fetches all outfits belonging to the current user."""
-    repo = OutfitRepository(db)
     outfits = await repo.list_by_user(user_id=current_user.id, limit=limit, offset=skip)
     
     # Normally we would serialize items too, but for scope we return base outfits

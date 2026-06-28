@@ -17,8 +17,33 @@ from app.core.security import JWTError, decode_token
 from app.db.session import get_db_session
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+from app.repositories.wardrobe_repository import WardrobeRepository
+from app.repositories.outfit_repository import OutfitRepository
+from app.repositories.recommendation_repository import RecommendationRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+
+# ── Database Repositories ──────────────────────────────────────────
+
+async def get_user_repository(db: AsyncSession = Depends(get_db_session)) -> UserRepository:
+    """Injects the UserRepository."""
+    return UserRepository(db)
+
+
+async def get_wardrobe_repository(db: AsyncSession = Depends(get_db_session)) -> WardrobeRepository:
+    """Injects the WardrobeRepository."""
+    return WardrobeRepository(db)
+
+
+async def get_outfit_repository(db: AsyncSession = Depends(get_db_session)) -> OutfitRepository:
+    """Injects the OutfitRepository."""
+    return OutfitRepository(db)
+
+
+async def get_recommendation_repository(db: AsyncSession = Depends(get_db_session)) -> RecommendationRepository:
+    """Injects the RecommendationRepository."""
+    return RecommendationRepository(db)
 
 
 async def get_current_user(

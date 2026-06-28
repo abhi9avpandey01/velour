@@ -10,7 +10,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_recommendation_repository, get_wardrobe_repository
 from app.db.session import get_db_session
 from app.models.enums import RecommendationAction
 from app.models.user import User
@@ -32,12 +32,10 @@ router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 async def generate_recommendations(
     request: GenerateRecommendationsRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    rec_repo: RecommendationRepository = Depends(get_recommendation_repository),
+    wardrobe_repo: WardrobeRepository = Depends(get_wardrobe_repository),
 ) -> ApiResponse[List[RecommendationResponse]]:
     """Generates a list of outfit recommendations based on rules and context."""
-    rec_repo = RecommendationRepository(db)
-    wardrobe_repo = WardrobeRepository(db)
-    
     # 1. Fetch recently worn items to penalize them
     recent_ids = await rec_repo.get_recently_worn_items(current_user.id)
     
@@ -90,11 +88,10 @@ async def generate_recommendations(
 async def accept_recommendation(
     recommendation_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    repo: RecommendationRepository = Depends(get_recommendation_repository),
 ) -> ApiResponse[dict]:
     """Records user acceptance of an outfit."""
     # Note: Real implementation should verify recommendation belongs to user
-    repo = RecommendationRepository(db)
     await repo.record_action(recommendation_id, RecommendationAction.ACCEPTED)
     return ApiResponse.ok({"status": "accepted"})
 
@@ -107,9 +104,8 @@ async def accept_recommendation(
 async def reject_recommendation(
     recommendation_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    repo: RecommendationRepository = Depends(get_recommendation_repository),
 ) -> ApiResponse[dict]:
     """Records user rejection of an outfit."""
-    repo = RecommendationRepository(db)
     await repo.record_action(recommendation_id, RecommendationAction.REJECTED)
     return ApiResponse.ok({"status": "rejected"})

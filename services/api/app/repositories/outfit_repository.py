@@ -24,7 +24,7 @@ class OutfitRepository:
         """Fetch all outfits belonging to a user."""
         stmt = (
             select(Outfit)
-            .options(selectinload(Outfit.items))
+            .options(selectinload(Outfit.items).selectinload(OutfitItem.wardrobe_item))
             .where(Outfit.user_id == user_id, Outfit.is_deleted == False)
             .order_by(Outfit.created_at.desc())
             .offset(offset)
@@ -37,7 +37,7 @@ class OutfitRepository:
         """Fetch a specific outfit."""
         stmt = (
             select(Outfit)
-            .options(selectinload(Outfit.items))
+            .options(selectinload(Outfit.items).selectinload(OutfitItem.wardrobe_item))
             .where(Outfit.id == outfit_id, Outfit.user_id == user_id, Outfit.is_deleted == False)
         )
         result = await self.session.execute(stmt)
