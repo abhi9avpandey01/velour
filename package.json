@@ -1,0 +1,47 @@
+{
+  "name": "velour",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Velour — Your AI Personal Stylist. Wardrobe management and outfit recommendation platform.",
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' --filter './packages/*' dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "docker compose up api",
+    "build": "pnpm build:types && pnpm build:config && pnpm build:ui && pnpm build:web",
+    "build:web": "pnpm --filter web build",
+    "build:types": "pnpm --filter @velour/types build",
+    "build:ui": "pnpm --filter @velour/ui build",
+    "build:config": "pnpm --filter @velour/config build",
+    "lint": "pnpm --filter web lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter web typecheck && pnpm --filter @velour/types typecheck && pnpm --filter @velour/ui typecheck && pnpm --filter @velour/config typecheck",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "docker:logs": "docker compose logs -f",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ],
+    "*.py": [
+      "ruff check --fix",
+      "ruff format"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

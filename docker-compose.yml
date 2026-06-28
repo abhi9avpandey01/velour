@@ -1,0 +1,110 @@
+# ──────────────────────────────────────────────────────────────
+# Velour — Docker Compose (local development)
+# ──────────────────────────────────────────────────────────────
+
+services:
+  # ── Next.js Frontend ───────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web/src:/app/src
+      - ./apps/web/public:/app/public
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - api
+    networks:
+      - velour-network
+
+  # ── FastAPI Backend ────────────────────────────
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/api/app:/app/app
+    env_file:
+      - .env
+    environment:
+      - API_ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - velour-network
+
+  # ── Celery Worker ──────────────────────────────
+  celery-worker:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+      target: development
+    command: celery -A app.core.celery_app:celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ./services/api/app:/app/app
+    env_file:
+      - .env
+    environment:
+      - API_ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - velour-network
+
+  # ── PostgreSQL ─────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=velour
+      - POSTGRES_PASSWORD=velour_secret
+      - POSTGRES_DB=velour
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U velour"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - velour-network
+
+  # ── Redis ──────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - velour-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  velour-network:
+    driver: bridge
