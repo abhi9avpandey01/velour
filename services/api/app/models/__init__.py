@@ -1,5 +1,3 @@
-"""Velour API — ORM models package."""
-
 from app.models.enums import (
     AIStatus,
     Category,
@@ -8,10 +6,15 @@ from app.models.enums import (
     ProcessingStatus,
     Season,
     UploadStatus,
+    RecommendationAction,
+    WeatherContext,
 )
 from app.models.image_asset import ImageAsset
 from app.models.user import User
 from app.models.wardrobe import WardrobeItem
+from app.models.wardrobe_metadata import WardrobeMetadata
+from app.models.recommendation import Outfit, OutfitItem, Recommendation, RecommendationHistory
+from app.models.chat import ChatRole, ChatSession, ChatMessage
 
 __all__ = [
     "User",
@@ -22,6 +25,16 @@ __all__ = [
     "UploadStatus",
     "ProcessingStatus",
     "AIStatus",
+    "RecommendationAction",
+    "WeatherContext",
     "WardrobeItem",
     "ImageAsset",
+    "WardrobeMetadata",
+    "Outfit",
+    "OutfitItem",
+    "Recommendation",
+    "RecommendationHistory",
+    "ChatRole",
+    "ChatSession",
+    "ChatMessage",
 ]

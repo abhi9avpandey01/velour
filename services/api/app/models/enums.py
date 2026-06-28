@@ -69,3 +69,21 @@ class AIStatus(str, Enum):
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
+
+class RecommendationAction(str, Enum):
+    """Track user feedback on recommendations."""
+    GENERATED = "GENERATED"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    MODIFIED = "MODIFIED"
+    WORN = "WORN"
+
+
+class WeatherContext(str, Enum):
+    """Abstracted weather contexts for rules engine."""
+    FREEZING = "Freezing"
+    COLD = "Cold"
+    MILD = "Mild"
+    WARM = "Warm"
+    HOT = "Hot"

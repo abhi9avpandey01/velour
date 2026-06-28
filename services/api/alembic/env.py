@@ -18,6 +18,9 @@ from app.db.base import Base
 from app.models.user import User  # noqa: F401
 from app.models.wardrobe import WardrobeItem  # noqa: F401
 from app.models.image_asset import ImageAsset  # noqa: F401
+from app.models.wardrobe_metadata import WardrobeMetadata  # noqa: F401
+from app.models.recommendation import Outfit, OutfitItem, Recommendation, RecommendationHistory  # noqa: F401
+from app.models.chat import ChatSession, ChatMessage  # noqa: F401
 
 # Alembic Config object
 config = context.config

@@ -20,6 +20,9 @@ from app.api.v1 import health as health_v1
 from app.api.v1 import upload as upload_v1
 from app.api.v1 import users as users_v1
 from app.api.v1 import wardrobe as wardrobe_v1
+from app.api.v1 import recommendations as recommendations_v1
+from app.api.v1 import outfits as outfits_v1
+from app.api.v1 import chat as chat_v1
 from app.core.config import settings
 from app.core.events import lifespan
 from app.core.exceptions import register_exception_handlers
@@ -57,6 +60,9 @@ app.include_router(auth_v1.router, prefix="/api/v1")
 app.include_router(users_v1.router, prefix="/api/v1")
 app.include_router(wardrobe_v1.router, prefix="/api/v1")
 app.include_router(upload_v1.router, prefix="/api/v1")
+app.include_router(recommendations_v1.router, prefix="/api/v1")
+app.include_router(outfits_v1.router, prefix="/api/v1")
+app.include_router(chat_v1.router, prefix="/api/v1")
 
 
 @app.get("/")

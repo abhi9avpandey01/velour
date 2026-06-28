@@ -23,7 +23,7 @@ async def _process_image_async(image_asset_id: str) -> None:
     async with async_session_factory() as session:
         from sqlalchemy import select
         
-        # Fetch the ImageAsset
+        # Fetch the ImageAsset to verify it exists first
         stmt = select(ImageAsset).where(ImageAsset.id == image_asset_id)
         result = await session.execute(stmt)
         asset = result.scalar_one_or_none()
@@ -32,20 +32,11 @@ async def _process_image_async(image_asset_id: str) -> None:
             logger.error(f"Worker failed: ImageAsset {image_asset_id} not found")
             return
 
-        # Mark as processing
-        asset.processing_status = ProcessingStatus.PROCESSING
-        asset.ai_status = AIStatus.RUNNING
-        await session.commit()
+        # Initialize and run the vision pipeline
+        from app.services.vision_service import VisionService
+        vision_service = VisionService(session)
+        await vision_service.process_image(image_asset_id)
         
-        # ── Simulate AI processing (e.g., resizing, classification) ──
-        logger.info(f"Simulating AI processing for 3 seconds...")
-        await asyncio.sleep(3)  # Sleep without blocking async loop
-
-        # Mark as completed
-        asset.processing_status = ProcessingStatus.COMPLETED
-        asset.ai_status = AIStatus.COMPLETED
-        await session.commit()
-
         logger.info(f"Worker finished: ImageAsset {image_asset_id} processed successfully")
 
 
