@@ -1,34 +1,35 @@
-/**
- * Velour — Landing Page
- *
- * Displays the Velour brand name and tagline.
- * This is the initial landing page for the engineering foundation.
- */
+"use client";
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function Home() {
+  const { token } = useAuthStore();
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6">
+    <main className="flex flex-1 h-screen flex-col items-center justify-center px-6">
       <div className="flex flex-col items-center gap-6 text-center">
         {/* Brand */}
-        <h1 className="text-6xl font-bold tracking-tight sm:text-8xl bg-gradient-to-r from-accent-light to-accent bg-clip-text text-transparent">
+        <h1 className="text-6xl font-bold tracking-tight sm:text-8xl bg-gradient-to-r from-zinc-500 to-zinc-900 bg-clip-text text-transparent dark:from-zinc-400 dark:to-zinc-100">
           Velour
         </h1>
 
         {/* Tagline */}
-        <p className="text-xl font-medium text-muted sm:text-2xl">
+        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400 sm:text-2xl">
           AI Personal Stylist
         </p>
 
         {/* Subtle divider */}
-        <div className="mt-4 h-px w-24 bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+        <div className="mt-4 h-px w-24 bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
 
-        {/* Status */}
-        <div className="mt-2 flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          Engineering Foundation Active
+        {/* Call to action */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-4">
+          <Link href={token ? "/dashboard" : "/login"}>
+            <Button size="lg" className="rounded-full px-8">
+              {token ? "Go to Dashboard" : "Get Started"}
+            </Button>
+          </Link>
         </div>
       </div>
     </main>

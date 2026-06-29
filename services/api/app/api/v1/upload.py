@@ -5,7 +5,7 @@ Exposes a fast multipart upload route that immediately pushes
 image processing to a background worker queue.
 """
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +31,7 @@ limiter = Limiter(key_func=get_remote_address)
 )
 @limiter.limit(settings.rate_limit_general)
 async def upload_image(
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),

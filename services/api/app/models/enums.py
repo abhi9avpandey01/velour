@@ -87,3 +87,15 @@ class WeatherContext(str, Enum):
     MILD = "Mild"
     WARM = "Warm"
     HOT = "Hot"
+
+
+class PreferenceSource(str, Enum):
+    """Source of a user preference."""
+    MANUAL = "MANUAL"
+    LEARNED = "LEARNED"
+
+
+class ChangedBy(str, Enum):
+    """Actor who changed a preference."""
+    USER = "USER"
+    AI = "AI"

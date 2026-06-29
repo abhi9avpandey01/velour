@@ -15,6 +15,7 @@ from app.models.wardrobe import WardrobeItem
 from app.models.wardrobe_metadata import WardrobeMetadata
 from app.models.recommendation import Outfit, OutfitItem, Recommendation, RecommendationHistory
 from app.models.chat import ChatRole, ChatSession, ChatMessage
+from app.models.preferences import PreferenceProfile, PreferenceHistory
 
 __all__ = [
     "User",
@@ -37,4 +38,6 @@ __all__ = [
     "ChatRole",
     "ChatSession",
     "ChatMessage",
+    "PreferenceProfile",
+    "PreferenceHistory",
 ]

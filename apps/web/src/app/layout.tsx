@@ -1,24 +1,15 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import { Providers } from '@/providers';
-import './globals.css';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { Providers } from "@/providers";
+import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Velour — AI Personal Stylist',
-  description:
-    'Velour helps you organize your wardrobe digitally and receive personalized outfit recommendations powered by AI.',
-  keywords: ['AI', 'fashion', 'wardrobe', 'outfit', 'stylist', 'personal stylist'],
-  authors: [{ name: 'Velour Team' }],
+  title: "Velour | AI Personal Stylist",
+  description: "Your AI Personal Stylist for wardrobe management and outfit recommendations.",
 };
 
 export default function RootLayout({
@@ -27,9 +18,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Providers>{children}</Providers>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers>
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );
