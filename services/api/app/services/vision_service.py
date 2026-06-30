@@ -32,8 +32,8 @@ class VisionService:
         self.session = session
         self.gateway = AIGateway()
 
-    async def process_image(self, asset_id: str) -> None:
-        """The main vision pipeline triggered by the Celery worker."""
+    async def process_image(self, asset_id: str) -> dict:
+        """The main vision pipeline triggered by the API."""
         # 1. Fetch Asset
         stmt = select(ImageAsset).where(ImageAsset.id == asset_id)
         result = await self.session.execute(stmt)
@@ -41,7 +41,7 @@ class VisionService:
 
         if not asset:
             logger.error(f"VisionService: ImageAsset {asset_id} not found.")
-            return
+            return {}
 
         item_id = asset.wardrobe_item_id
         start_time = time.time()
@@ -53,8 +53,14 @@ class VisionService:
 
         try:
             # 2. Download original image bytes from Supabase
+            # Fetch WardrobeItem to get user_id and to update it later
+            item = await self.session.get(WardrobeItem, item_id)
+            if not item:
+                logger.error(f"VisionService: WardrobeItem {item_id} not found.")
+                return {}
+
             # Convert public URL to internal storage path
-            path = f"users/{asset.wardrobe_item.user_id}/wardrobe/{item_id}/original.jpg"
+            path = f"users/{item.user_id}/wardrobe/{item_id}/original.jpg"
             if asset.mime_type == "image/png":
                 path = path.replace(".jpg", ".png")
             elif asset.mime_type == "image/webp":
@@ -70,7 +76,7 @@ class VisionService:
             )
 
             # 4. Upload processed image back to Supabase
-            processed_path = f"users/{asset.wardrobe_item.user_id}/wardrobe/{item_id}/processed.png"
+            processed_path = f"users/{item.user_id}/wardrobe/{item_id}/processed.png"
             supabase.storage.from_(settings.supabase_bucket).upload(
                 path=processed_path,
                 file=processed_bytes,
@@ -109,6 +115,19 @@ class VisionService:
             )
             self.session.add(metadata)
 
+            # Update WardrobeItem
+            if attributes.get("primary_color"):
+                item.color = attributes.get("primary_color")
+            if attributes.get("material"):
+                item.material = attributes.get("material")
+            if attributes.get("pattern"):
+                item.pattern = attributes.get("pattern")
+            if attributes.get("category"):
+                item.subcategory = attributes.get("category")
+                
+            item.thumbnail_url = processed_url
+            self.session.add(item)
+
             # Update final statuses
             asset.processing_status = ProcessingStatus.COMPLETED
             asset.ai_status = AIStatus.COMPLETED
@@ -117,6 +136,7 @@ class VisionService:
             await self.session.commit()
             
             logger.info(f"Vision Pipeline completed for {item_id} in {inference_time:.0f}ms")
+            return attributes
 
         except Exception as e:
             logger.error(f"Vision Pipeline failed for {item_id}: {e}", exc_info=True)

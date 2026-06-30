@@ -91,8 +91,37 @@ export function useUploadImage() {
       const res = await api.post("/wardrobe/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      // Backend returns ApiResponse<{ item_id, status, message }>
-      return res.data.data as { item_id: string; status: string; message: string };
+      // Backend returns ApiResponse<{ item_id, asset_id, processing_status }>
+      return res.data.data as { item_id: string; asset_id: string; processing_status: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wardrobe"] });
+    },
+  });
+}
+
+// --- AI Analysis Mutations ---
+export interface AnalysisResult {
+  item_id: string;
+  asset_id: string;
+  attributes: {
+    caption?: string;
+    category?: string;
+    primary_color?: string;
+    material?: string;
+    pattern?: string;
+    overall_confidence?: number;
+    model_version?: string;
+    [key: string]: any;
+  };
+}
+
+export function useAnalyzeImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const res = await api.post(`/wardrobe/${itemId}/analyze`);
+      return res.data.data as AnalysisResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wardrobe"] });

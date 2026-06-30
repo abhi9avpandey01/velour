@@ -5,15 +5,19 @@ CRUD and management routes for WardrobeItem entities.
 Every route is protected and scoped to the authenticated user.
 """
 
+import logging
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.db.session import get_db_session
+from app.models.image_asset import ImageAsset
 from app.models.user import User
+from app.models.wardrobe import WardrobeItem
 from app.schemas.common import ApiResponse
 from app.schemas.wardrobe import (
     WardrobeFilterParams,
@@ -22,6 +26,8 @@ from app.schemas.wardrobe import (
     WardrobeItemUpdate,
 )
 from app.services.wardrobe_service import WardrobeService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/wardrobe", tags=["Wardrobe"])
 
@@ -151,3 +157,58 @@ async def toggle_archive(
     service = WardrobeService(db)
     item = await service.toggle_archive(current_user.id, item_id)
     return ApiResponse.ok(item)
+
+
+@router.post(
+    "/{item_id}/analyze",
+    response_model=ApiResponse[dict[str, Any]],
+    summary="Analyze wardrobe item with AI",
+    description=(
+        "Runs the full AI vision pipeline (background removal, Florence-2 attribute "
+        "extraction, CLIP embedding) synchronously and returns the extracted attributes."
+    ),
+)
+async def analyze_item(
+    item_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> ApiResponse[dict[str, Any]]:
+    """Trigger synchronous AI analysis for a wardrobe item.
+
+    Looks up the ImageAsset linked to the given item and runs the
+    VisionService pipeline.  Returns extracted attributes such as
+    category, color, material, and pattern.
+    """
+    # Verify ownership
+    item = await db.get(WardrobeItem, item_id)
+    if not item or item.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Wardrobe item not found.")
+
+    # Find the image asset for this item
+    stmt = (
+        select(ImageAsset)
+        .where(ImageAsset.wardrobe_item_id == item_id)
+        .order_by(ImageAsset.created_at.desc())
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    asset = result.scalar_one_or_none()
+
+    if not asset:
+        raise HTTPException(
+            status_code=404, detail="No image asset found for this item."
+        )
+
+    logger.info(f"Starting AI analysis for item {item_id}, asset {asset.id}")
+
+    # Lazy import to avoid loading heavy AI dependencies at module level
+    from app.services.vision_service import VisionService
+
+    vision = VisionService(db)
+    attributes = await vision.process_image(str(asset.id))
+
+    return ApiResponse.ok({
+        "item_id": str(item_id),
+        "asset_id": str(asset.id),
+        "attributes": attributes,
+    })

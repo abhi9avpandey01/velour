@@ -15,7 +15,6 @@ from app.core.storage import StorageService
 from app.models.enums import Category, Occasion, Season, UploadStatus
 from app.models.image_asset import ImageAsset
 from app.models.wardrobe import WardrobeItem
-from app.worker.tasks import process_image_upload
 
 logger = logging.getLogger(__name__)
 
@@ -99,15 +98,13 @@ class ImageService:
         self._session.add(asset)
         await self._session.flush()
 
-        # Commit the transaction so Celery worker can find the records
+        # Commit the transaction so it's persisted immediately
         await self._session.commit()
 
-        # 6. Publish Event to Celery (ImageUploaded)
-        # We use .delay() to send it to the Redis queue asynchronously.
-        process_image_upload.delay(str(asset.id))
-        logger.info(f"Queue published: ImageUploaded event for asset {asset.id}")
+        logger.info(f"Image uploaded and saved with asset_id {asset.id}")
 
         return {
             "item_id": str(item_id),
+            "asset_id": str(asset.id),
             "processing_status": "PENDING"
         }
