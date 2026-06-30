@@ -29,11 +29,14 @@ export default function RegisterPage() {
           router.push("/login");
         },
         onError: (err: any) => {
-          const detail = err.response?.data?.detail;
-          if (Array.isArray(detail)) {
-            toast.error(detail[0].msg || "Validation error");
+          // Backend error format: { success: false, error: { code, message, details } }
+          const errorMsg = err.response?.data?.error?.message;
+          // Pydantic validation errors come as { detail: [...] }
+          const pydanticDetail = err.response?.data?.detail;
+          if (Array.isArray(pydanticDetail)) {
+            toast.error(pydanticDetail[0]?.msg || "Validation error");
           } else {
-            toast.error(detail || "Registration failed");
+            toast.error(errorMsg || pydanticDetail || "Registration failed");
           }
         }
       }

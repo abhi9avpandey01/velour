@@ -1,11 +1,10 @@
 "use client";
 
 import { useWardrobe } from "@/lib/queries";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Shirt } from "lucide-react";
+import { PlusCircle, Shirt, Heart } from "lucide-react";
 import Link from "next/link";
-import { Progress } from "@/components/ui/progress";
 
 export default function DashboardPage() {
   const { data: items, isLoading, isError } = useWardrobe();
@@ -23,7 +22,7 @@ export default function DashboardPage() {
 
   const totalItems = items?.length || 0;
   const recentItems = items?.slice(0, 4) || [];
-  const processingItems = items?.filter(i => i.processing_status === "PENDING" || i.processing_status === "PROCESSING")?.length || 0;
+  const favoriteItems = items?.filter(i => i.favorite)?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -54,17 +53,17 @@ export default function DashboardPage() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processing</CardTitle>
-            <div className="h-4 w-4 rounded-full bg-blue-500 animate-pulse" />
+            <CardTitle className="text-sm font-medium">Favorites</CardTitle>
+            <Heart className="h-4 w-4 text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{processingItems}</div>
-            <p className="text-xs text-zinc-500">Items being analyzed by AI</p>
+            <div className="text-2xl font-bold">{favoriteItems}</div>
+            <p className="text-xs text-zinc-500">Items marked as favorite</p>
           </CardContent>
         </Card>
       </div>
 
-      <h2 className="text-xl font-bold mt-8 mb-4">Recently Uploaded</h2>
+      <h2 className="text-xl font-bold mt-8 mb-4">Recently Added</h2>
       {recentItems.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -83,20 +82,20 @@ export default function DashboardPage() {
               <div className="aspect-square relative bg-zinc-100 dark:bg-zinc-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src={item.image_url} 
-                  alt={item.category || "Clothing item"} 
+                  src={item.thumbnail_url || item.image_url} 
+                  alt={item.name || item.category || "Clothing item"} 
                   className="object-cover w-full h-full"
                 />
-                {(item.processing_status === "PENDING" || item.processing_status === "PROCESSING") && (
-                  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white p-4">
-                    <div className="mb-2 text-sm font-medium">AI Analyzing...</div>
-                    <Progress value={50} className="w-full" />
+                {item.favorite && (
+                  <div className="absolute top-2 right-2 p-1 bg-white/80 rounded-full">
+                    <Heart className="h-3 w-3 fill-red-500 text-red-500" />
                   </div>
                 )}
               </div>
               <CardContent className="p-4">
-                <div className="font-medium truncate">{item.category || "Unknown"}</div>
-                <div className="text-sm text-zinc-500 truncate">{item.color || "Unknown color"}</div>
+                <div className="font-medium truncate">{item.name || item.category || "Unknown"}</div>
+                <div className="text-sm text-zinc-500 truncate capitalize">{item.color || "Unknown color"}</div>
+                {item.brand && <div className="text-xs text-zinc-400 truncate">{item.brand}</div>}
               </CardContent>
             </Card>
           ))}

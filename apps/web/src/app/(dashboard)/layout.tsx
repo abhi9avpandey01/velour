@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/lib/auth-store";
+import { useCurrentUser } from "@/lib/queries";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
@@ -9,7 +10,8 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { token, user, logout } = useAuthStore();
+  const { token, logout } = useAuthStore();
+  const { data: currentUser } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -73,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Header */}
         <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
-            Welcome, {user?.username}
+            {currentUser ? `Welcome, ${currentUser.username}` : "Welcome"}
           </h2>
           <div className="flex items-center space-x-4">
             <Button

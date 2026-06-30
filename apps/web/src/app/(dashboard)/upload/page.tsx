@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { useUploadImage } from "@/lib/queries";
+import { useUploadImage, getApiError } from "@/lib/queries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -55,7 +55,7 @@ export default function UploadPage() {
         router.push("/wardrobe");
       },
       onError: (err: any) => {
-        toast.error(err.response?.data?.detail || "Failed to upload image. Please try again.");
+        toast.error(getApiError(err, "Failed to upload image. Please try again."));
       }
     });
   };

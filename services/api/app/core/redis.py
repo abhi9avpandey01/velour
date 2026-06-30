@@ -20,9 +20,22 @@ async def get_redis_client() -> aioredis.Redis:
     """
     global _redis_client  # noqa: PLW0603
     if _redis_client is None:
+        # Strip the ssl_cert_reqs query param from the URL — it must be
+        # passed as a kwarg, not a URL parameter, for redis-py to accept it.
+        redis_url = settings.redis_url
+        if "ssl_cert_reqs" in redis_url:
+            from urllib.parse import urlparse, urlencode, urlunparse, parse_qs
+            parsed = urlparse(redis_url)
+            params = parse_qs(parsed.query)
+            params.pop("ssl_cert_reqs", None)
+            cleaned = urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
+        else:
+            cleaned = redis_url
+
         _redis_client = aioredis.from_url(
-            settings.redis_url,
+            cleaned,
             decode_responses=True,
+            ssl_cert_reqs=None,  # Disable cert verification for Upstash TLS
         )
     return _redis_client
 

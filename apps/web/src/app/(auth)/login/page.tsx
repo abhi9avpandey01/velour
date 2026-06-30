@@ -17,25 +17,27 @@ export default function LoginPage() {
   const { setAuth } = useAuthStore();
   const loginMutation = useLogin();
   
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate(
-      { username, password },
+      { email, password },
       {
         onSuccess: (data) => {
-          setAuth(data.access_token, data.user);
+          setAuth(data.access_token, null);
           toast.success("Logged in successfully!");
           router.push("/dashboard");
         },
         onError: (err: any) => {
-          const detail = err.response?.data?.detail;
-          if (Array.isArray(detail)) {
-            toast.error(detail[0].msg || "Validation error");
+          // Backend error format: { success: false, error: { code, message, details } }
+          const errorMsg = err.response?.data?.error?.message;
+          const pydanticDetail = err.response?.data?.detail;
+          if (Array.isArray(pydanticDetail)) {
+            toast.error(pydanticDetail[0]?.msg || "Validation error");
           } else {
-            toast.error(detail || "Login failed");
+            toast.error(errorMsg || pydanticDetail || "Login failed");
           }
         }
       }
@@ -55,10 +57,10 @@ export default function LoginPage() {
               <Label htmlFor="username">Email</Label>
               <Input 
                 id="username" 
-                type="text" 
+                type="email" 
                 placeholder="email@example.com"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required 
               />
             </div>
