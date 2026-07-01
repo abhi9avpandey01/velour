@@ -1,9 +1,10 @@
-import { WardrobeItem } from "@/lib/queries";
+import { WardrobeItem, useAnalyzeImage } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Heart, Sparkles, Loader2 } from "lucide-react";
 
 export function WardrobeCard({ item }: { item: WardrobeItem }) {
+  const analyzeMutation = useAnalyzeImage();
   return (
     <Card className="overflow-hidden relative group">
       <div className="aspect-[3/4] relative bg-zinc-100 dark:bg-zinc-800">
@@ -14,14 +15,34 @@ export function WardrobeCard({ item }: { item: WardrobeItem }) {
           className="object-cover w-full h-full"
         />
 
-        {/* Favorite indicator / toggle */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="absolute top-2 right-2 bg-white/60 backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-        >
-          <Heart className={`h-5 w-5 ${item.favorite ? "fill-red-500 text-red-500" : "text-zinc-600"}`} />
-        </Button>
+        {/* Action buttons overlay */}
+        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="bg-white/60 backdrop-blur hover:bg-white shadow-sm"
+          >
+            <Heart className={`h-5 w-5 ${item.favorite ? "fill-red-500 text-red-500" : "text-zinc-600"}`} />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-white/60 backdrop-blur hover:bg-white shadow-sm text-indigo-600"
+            onClick={(e) => {
+              e.preventDefault();
+              analyzeMutation.mutate(item.id);
+            }}
+            disabled={analyzeMutation.isPending}
+            title="Analyze with AI"
+          >
+            {analyzeMutation.isPending ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Sparkles className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
       </div>
 
       <CardContent className="p-4 space-y-2">
