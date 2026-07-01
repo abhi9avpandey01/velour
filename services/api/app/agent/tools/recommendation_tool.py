@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.tools.base import BaseTool
 from app.models.enums import Occasion, Season, WeatherContext
 from app.recommendations.context import RecommendationContext
-from app.recommendations.generator import RecommendationGenerator
+from app.recommendations.generator import OutfitRecommendationResult
 from app.repositories.recommendation_repository import RecommendationRepository
 from app.repositories.wardrobe_repository import WardrobeRepository
 
@@ -80,14 +80,53 @@ class GenerateOutfitTool(BaseTool):
         if not wardrobe_items:
             return {"error": "The user's wardrobe is empty. Ask them to upload items first."}
             
-        # 2. Generate Outfit
-        results = RecommendationGenerator.generate(wardrobe_items, context, max_results=1)
+        # 2. Prepare Wardrobe for AI
+        wardrobe_dicts = [
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "category": item.category.value,
+                "subcategory": item.subcategory,
+                "color": item.color,
+                "pattern": item.pattern.value if item.pattern else "Solid",
+                "material": item.material
+            }
+            for item in wardrobe_items
+        ]
         
-        if not results:
-            return {"error": "Could not find any valid combinations for this weather/occasion."}
+        user_request = f"Occasion: {occasion}, Weather: {weather}, Season: {season}"
+        
+        # 3. Generate Outfit via AI Service
+        from app.services.ai_service import AIService
+        ai_service = AIService()
+        
+        try:
+            ai_result = ai_service.recommendOutfit(user_request, wardrobe_dicts)
+        except Exception as e:
+            return {"error": str(e)}
             
-        # 3. Save it
-        result = results[0]
+        selected_ids = []
+        for key in ["top_id", "bottom_id", "shoe_id"]:
+            val = ai_result.get(key)
+            if val and val.lower() != "none":
+                try:
+                    selected_ids.append(uuid.UUID(val))
+                except ValueError:
+                    pass
+                    
+        selected_items = [item for item in wardrobe_items if item.id in selected_ids]
+        
+        if not selected_items:
+            return {"error": "Could not generate a valid combination from the wardrobe."}
+            
+        result = OutfitRecommendationResult(
+            items=selected_items,
+            overall_score=0.95,
+            scores={},
+            reasons=[ai_result.get("reason", "No reason provided.")]
+        )
+        
+        # 4. Save it
         snapshot = {"weather": weather, "season": season, "occasion": occasion}
         saved_rec = await rec_repo.save_recommendation(self.user_id, result, snapshot)
         

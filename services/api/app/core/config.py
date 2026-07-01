@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     # ── xAI (Grok Stylist Agent) ──────────────────
     xai_api_key: str = "xai-placeholder"
 
+    # ── Google Gemini ─────────────────────────────
+    gemini_api_key: str = "gemini-placeholder"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

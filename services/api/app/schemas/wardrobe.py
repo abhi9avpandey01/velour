@@ -61,11 +61,13 @@ class WardrobeItemUpdate(BaseModel):
     notes: str | None = Field(default=None)
 
 
+import uuid
+
 class WardrobeItemResponse(WardrobeItemBase):
     """Schema for public wardrobe item data in API responses."""
 
-    id: str = Field(..., description="Wardrobe item UUID")
-    user_id: str = Field(..., description="Owner's user UUID")
+    id: uuid.UUID = Field(..., description="Wardrobe item UUID")
+    user_id: uuid.UUID = Field(..., description="Owner's user UUID")
     wears_count: int = Field(default=0)
     favorite: bool = Field(default=False)
     archived: bool = Field(default=False)

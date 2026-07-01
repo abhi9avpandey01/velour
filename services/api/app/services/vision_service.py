@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.ai.adapters.clip_adapter import CLIPAdapter
-from app.ai.adapters.florence_adapter import FlorenceAdapter
 from app.ai.adapters.rembg_adapter import BackgroundRemovalAdapter
 from app.ai.gateway import AIGateway
 from app.core.storage import supabase, settings
@@ -87,11 +86,11 @@ class VisionService:
             # Update asset with thumbnail (using processed image for now)
             asset.thumbnail_url = processed_url
 
-            # 5. Extract Attributes (Florence-2)
+            # 5. Extract Attributes (Gemini)
             # Use processed (no-bg) bytes so the model focuses entirely on the clothing
-            attributes = self.gateway.execute_adapter(
-                FlorenceAdapter, "extract_attributes", processed_bytes
-            )
+            from app.services.ai_service import AIService
+            ai_service = AIService()
+            attributes = ai_service.analyzeClothing(processed_bytes)
 
             # 6. Generate Embeddings (CLIP)
             embedding = self.gateway.execute_adapter(
@@ -101,27 +100,24 @@ class VisionService:
             # 7. Persist Metadata
             inference_time = (time.time() - start_time) * 1000  # ms
             
+            conf = attributes.get("confidence", 1.0)
             metadata = WardrobeMetadata(
                 wardrobe_item_id=item_id,
                 embedding=embedding,
-                image_caption=attributes.get("caption"),
-                category_attr=attributes.get("category"),
-                primary_color=attributes.get("primary_color"),
-                material=attributes.get("material"),
-                pattern=attributes.get("pattern"),
-                overall_confidence=attributes.get("overall_confidence"),
+                image_caption=attributes.get("description"),
+                category_attr={"value": attributes.get("category"), "confidence": conf},
+                primary_color={"value": attributes.get("color"), "confidence": conf},
+                material={"value": attributes.get("material", "Unknown"), "confidence": conf},
+                pattern={"value": attributes.get("pattern"), "confidence": conf},
+                overall_confidence=conf,
                 model_version=attributes.get("model_version"),
                 inference_time_ms=inference_time,
             )
             self.session.add(metadata)
 
             # Update WardrobeItem
-            if attributes.get("primary_color"):
-                item.color = attributes.get("primary_color")
-            if attributes.get("material"):
-                item.material = attributes.get("material")
-            if attributes.get("pattern"):
-                item.pattern = attributes.get("pattern")
+            if attributes.get("color"):
+                item.color = attributes.get("color")
             if attributes.get("category"):
                 item.subcategory = attributes.get("category")
                 

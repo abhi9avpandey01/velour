@@ -22,8 +22,9 @@ def mock_asset():
 
 @pytest.mark.asyncio
 @patch("app.services.vision_service.supabase")
+@patch("app.services.vision_service.AIService.analyzeClothing")
 @patch("app.services.vision_service.AIGateway.execute_adapter")
-async def test_process_image_success(mock_execute_adapter, mock_supabase, mock_asset):
+async def test_process_image_success(mock_execute_adapter, mock_analyze_clothing, mock_supabase, mock_asset):
     """Test the full vision pipeline aggregation without running real models."""
     mock_session = AsyncMock()
     mock_result = AsyncMock()
@@ -37,14 +38,19 @@ async def test_process_image_success(mock_execute_adapter, mock_supabase, mock_a
     # Mock AI Gateway adapter results (side_effect returns sequential values for each call)
     mock_execute_adapter.side_effect = [
         b"processed PNG bytes", # BackgroundRemovalAdapter
-        {                       # FlorenceAdapter
-            "caption": "A black t-shirt",
-            "category": {"value": "Tops", "confidence": 0.95},
-            "overall_confidence": 0.9,
-            "model_version": "florence-test"
-        },
         [0.1, 0.2, 0.3] * 170 + [0.4, 0.5] # CLIPAdapter (512 dims)
     ]
+    
+    # Mock AIService
+    mock_analyze_clothing.return_value = {
+        "description": "A black t-shirt",
+        "category": "Tops",
+        "color": "black",
+        "pattern": "solid",
+        "style": "Casual",
+        "confidence": 0.95,
+        "model_version": "gemini-1.5-pro"
+    }
     
     service = VisionService(mock_session)
     await service.process_image(str(mock_asset.id))
