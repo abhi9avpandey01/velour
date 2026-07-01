@@ -3,9 +3,9 @@
 import { useAuthStore } from "@/lib/auth-store";
 import { useCurrentUser } from "@/lib/queries";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shirt, Upload, Home, LogOut, Loader2 } from "lucide-react";
+import { Shirt, Upload, Home, LogOut, Loader2, MessageSquare } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
@@ -15,14 +15,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!token) {
       router.push("/login");
     }
   }, [token, router]);
 
-  if (!token) {
+  if (!mounted || !token) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -38,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Wardrobe", href: "/wardrobe", icon: Shirt },
+    { name: "Stylist", href: "/stylist", icon: MessageSquare },
     { name: "Upload", href: "/upload", icon: Upload },
   ];
 

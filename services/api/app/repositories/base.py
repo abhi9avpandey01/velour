@@ -123,13 +123,17 @@ class BaseRepository(Generic[T]):
         """
         from datetime import datetime, timezone
 
+        values = {"is_deleted": True}
+        if hasattr(self._model, "deleted_at"):
+            values["deleted_at"] = datetime.now(timezone.utc)
+
         stmt = (
             update(self._model)
             .where(
                 self._model.id == entity_id,
                 self._model.is_deleted.is_(False),
             )
-            .values(is_deleted=True, deleted_at=datetime.now(timezone.utc))
+            .values(**values)
         )
         result = await self._session.execute(stmt)
         await self._session.flush()

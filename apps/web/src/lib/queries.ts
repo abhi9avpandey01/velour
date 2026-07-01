@@ -112,6 +112,7 @@ export interface AnalysisResult {
     pattern?: string;
     overall_confidence?: number;
     model_version?: string;
+    outfit_suggestions?: string;
     [key: string]: any;
   };
 }
@@ -122,6 +123,19 @@ export function useAnalyzeImage() {
     mutationFn: async (itemId: string) => {
       const res = await api.post(`/wardrobe/${itemId}/analyze`);
       return res.data.data as AnalysisResult;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wardrobe"] });
+    },
+  });
+}
+
+export function useDeleteItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const res = await api.delete(`/wardrobe/${itemId}`);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wardrobe"] });

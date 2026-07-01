@@ -2,11 +2,12 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { useUploadImage, useAnalyzeImage, getApiError } from "@/lib/queries";
+import { useUploadImage, useAnalyzeImage, useDeleteItem, getApiError } from "@/lib/queries";
 import type { AnalysisResult } from "@/lib/queries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { StylistResponse, StylistResponseSkeleton } from "@/components/wardrobe/StylistResponse";
 import {
   UploadCloud,
   FileImage,
@@ -21,6 +22,7 @@ import {
   Gem,
   ArrowRight,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -31,6 +33,7 @@ export default function UploadPage() {
   const router = useRouter();
   const uploadMutation = useUploadImage();
   const analyzeMutation = useAnalyzeImage();
+  const deleteMutation = useDeleteItem();
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -70,6 +73,22 @@ export default function UploadPage() {
     setStep("select");
     uploadMutation.reset();
     analyzeMutation.reset();
+  };
+
+  const handleDelete = () => {
+    if (itemId) {
+      deleteMutation.mutate(itemId, {
+        onSuccess: () => {
+          toast.success("Image deleted successfully.");
+          clearFile();
+        },
+        onError: (err: any) => {
+          toast.error(getApiError(err, "Failed to delete image."));
+        }
+      });
+    } else {
+      clearFile();
+    }
   };
 
   const handleUpload = () => {
@@ -278,7 +297,8 @@ export default function UploadPage() {
 
           {/* ── Analysis Results ─────── */}
           {step === "results" && attrs && (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Compact attribute pills */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <ResultCard icon={<Shirt className="h-5 w-5" />} label="Category" value={attrs.category} />
                 <ResultCard icon={<Palette className="h-5 w-5" />} label="Color" value={attrs.primary_color} />
@@ -286,14 +306,12 @@ export default function UploadPage() {
                 <ResultCard icon={<Layers className="h-5 w-5" />} label="Pattern" value={attrs.pattern} />
               </div>
 
-              {attrs.caption && (
-                <div className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-1">
-                    AI Caption
-                  </p>
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">{attrs.caption}</p>
-                </div>
-              )}
+              {/* AI Stylist Response — conversational chatbot bubble */}
+              {attrs.outfit_suggestions ? (
+                <StylistResponse content={attrs.outfit_suggestions} animate={true} />
+              ) : attrs.caption ? (
+                <StylistResponse content={attrs.caption} animate={true} />
+              ) : null}
 
               {attrs.overall_confidence !== undefined && (
                 <div className="flex items-center gap-3">
@@ -330,6 +348,9 @@ export default function UploadPage() {
           {/* ── Step: uploaded ─────── */}
           {step === "uploaded" && (
             <>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </Button>
               <Button variant="outline" onClick={clearFile}>
                 <RotateCcw className="h-4 w-4 mr-2" /> Start Over
               </Button>
@@ -349,6 +370,9 @@ export default function UploadPage() {
           {/* ── Step: results ─────── */}
           {step === "results" && (
             <>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </Button>
               <Button variant="outline" onClick={clearFile}>
                 <RotateCcw className="h-4 w-4 mr-2" /> Upload Another
               </Button>

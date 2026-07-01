@@ -100,6 +100,7 @@ class AIService:
                     "style": str(validated_data["style"]).strip().title(),
                     "description": str(validated_data["description"]).strip(),
                     "confidence": float(validated_data["confidence"]),
+                    "outfit_suggestions": str(validated_data.get("outfit_suggestions", "")).strip(),
                     "model_version": self.model_name
                 }
                 return normalized
@@ -115,6 +116,7 @@ class AIService:
                         "style": "Unknown",
                         "description": "Error analyzing image",
                         "confidence": 0.0,
+                        "outfit_suggestions": "Unable to generate outfit suggestions due to an error.",
                         "model_version": self.model_name
                     }
             except Exception as e:

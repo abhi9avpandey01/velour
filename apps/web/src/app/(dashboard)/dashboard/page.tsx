@@ -1,13 +1,15 @@
 "use client";
 
-import { useWardrobe } from "@/lib/queries";
+import { useWardrobe, useDeleteItem } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Shirt, Heart } from "lucide-react";
+import { PlusCircle, Shirt, Heart, Trash2, Loader2, MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { data: items, isLoading, isError } = useWardrobe();
+  const deleteMutation = useDeleteItem();
 
   if (isLoading) {
     return <div className="animate-pulse space-y-4">
@@ -61,6 +63,19 @@ export default function DashboardPage() {
             <p className="text-xs text-zinc-500">Items marked as favorite</p>
           </CardContent>
         </Card>
+
+        <Link href="/stylist" className="block">
+          <Card className="border-violet-500/30 bg-gradient-to-br from-violet-950/40 to-fuchsia-950/20 hover:border-violet-500/50 transition-colors cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-violet-300">AI Stylist</CardTitle>
+              <MessageSquare className="h-4 w-4 text-violet-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold text-violet-200">Chat Now</div>
+              <p className="text-xs text-violet-400/80">Ask what to wear today</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <h2 className="text-xl font-bold mt-8 mb-4">Recently Added</h2>
@@ -78,7 +93,7 @@ export default function DashboardPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {recentItems.map((item) => (
-            <Card key={item.id} className="overflow-hidden">
+            <Card key={item.id} className="overflow-hidden group">
               <div className="aspect-square relative bg-zinc-100 dark:bg-zinc-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
@@ -86,6 +101,33 @@ export default function DashboardPage() {
                   alt={item.name || item.category || "Clothing item"} 
                   className="object-cover w-full h-full"
                 />
+                
+                {/* Action buttons overlay */}
+                <div className="absolute top-2 left-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="bg-white/60 backdrop-blur hover:bg-white hover:text-red-600 shadow-sm text-zinc-600"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (window.confirm("Are you sure you want to delete this item?")) {
+                        deleteMutation.mutate(item.id, {
+                          onSuccess: () => toast.success("Item deleted successfully."),
+                          onError: () => toast.error("Failed to delete item.")
+                        });
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                    title="Delete Item"
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+
                 {item.favorite && (
                   <div className="absolute top-2 right-2 p-1 bg-white/80 rounded-full">
                     <Heart className="h-3 w-3 fill-red-500 text-red-500" />

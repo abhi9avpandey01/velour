@@ -132,7 +132,16 @@ class VisionService:
             await self.session.commit()
             
             logger.info(f"Vision Pipeline completed for {item_id} in {inference_time:.0f}ms")
-            return attributes
+            return {
+                "category": attributes.get("category"),
+                "primary_color": attributes.get("color"),
+                "pattern": attributes.get("pattern"),
+                "material": attributes.get("style", "Unknown"),
+                "caption": attributes.get("description"),
+                "overall_confidence": attributes.get("confidence", 1.0),
+                "outfit_suggestions": attributes.get("outfit_suggestions"),
+                "model_version": attributes.get("model_version"),
+            }
 
         except Exception as e:
             logger.error(f"Vision Pipeline failed for {item_id}: {e}", exc_info=True)
