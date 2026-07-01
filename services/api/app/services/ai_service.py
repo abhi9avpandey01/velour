@@ -26,8 +26,8 @@ class AIService:
             logger.warning("Gemini API key is missing or set to placeholder.")
         
         genai.configure(api_key=settings.gemini_api_key)
-        # We use gemini-1.5-pro which supports both vision and text tasks well.
-        self.model_name = "gemini-1.5-pro"
+        # We use gemini-2.5-flash which supports both vision and text tasks well and has free tier quota.
+        self.model_name = "gemini-2.5-flash"
         
         # Determine paths to prompt files relative to this file
         base_dir = Path(__file__).parent.parent
