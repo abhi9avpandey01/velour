@@ -79,7 +79,7 @@ class VisionService:
             supabase.storage.from_(settings.supabase_bucket).upload(
                 path=processed_path,
                 file=processed_bytes,
-                file_options={"content-type": "image/png"},
+                file_options={"content-type": "image/png", "x-upsert": "true"},
             )
             processed_url = supabase.storage.from_(settings.supabase_bucket).get_public_url(processed_path)
 
@@ -101,19 +101,34 @@ class VisionService:
             inference_time = (time.time() - start_time) * 1000  # ms
             
             conf = attributes.get("confidence", 1.0)
-            metadata = WardrobeMetadata(
-                wardrobe_item_id=item_id,
-                embedding=embedding,
-                image_caption=attributes.get("description"),
-                category_attr={"value": attributes.get("category"), "confidence": conf},
-                primary_color={"value": attributes.get("color"), "confidence": conf},
-                material={"value": attributes.get("material", "Unknown"), "confidence": conf},
-                pattern={"value": attributes.get("pattern"), "confidence": conf},
-                overall_confidence=conf,
-                model_version=attributes.get("model_version"),
-                inference_time_ms=inference_time,
-            )
-            self.session.add(metadata)
+            
+            stmt = select(WardrobeMetadata).where(WardrobeMetadata.wardrobe_item_id == item_id)
+            existing_metadata = (await self.session.execute(stmt)).scalar_one_or_none()
+            
+            if existing_metadata:
+                existing_metadata.embedding = embedding
+                existing_metadata.image_caption = attributes.get("description")
+                existing_metadata.category_attr = {"value": attributes.get("category"), "confidence": conf}
+                existing_metadata.primary_color = {"value": attributes.get("color"), "confidence": conf}
+                existing_metadata.material = {"value": attributes.get("material", "Unknown"), "confidence": conf}
+                existing_metadata.pattern = {"value": attributes.get("pattern"), "confidence": conf}
+                existing_metadata.overall_confidence = conf
+                existing_metadata.model_version = attributes.get("model_version")
+                existing_metadata.inference_time_ms = inference_time
+            else:
+                metadata = WardrobeMetadata(
+                    wardrobe_item_id=item_id,
+                    embedding=embedding,
+                    image_caption=attributes.get("description"),
+                    category_attr={"value": attributes.get("category"), "confidence": conf},
+                    primary_color={"value": attributes.get("color"), "confidence": conf},
+                    material={"value": attributes.get("material", "Unknown"), "confidence": conf},
+                    pattern={"value": attributes.get("pattern"), "confidence": conf},
+                    overall_confidence=conf,
+                    model_version=attributes.get("model_version"),
+                    inference_time_ms=inference_time,
+                )
+                self.session.add(metadata)
 
             # Update WardrobeItem
             if attributes.get("color"):

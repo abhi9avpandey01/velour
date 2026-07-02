@@ -103,6 +103,10 @@ class ImageService:
 
         logger.info(f"Image uploaded and saved with asset_id {asset.id}")
 
+        # 6. Trigger background worker for AI processing
+        from app.worker.tasks import process_image_upload
+        process_image_upload.delay(str(asset.id))
+
         return {
             "item_id": str(item_id),
             "asset_id": str(asset.id),

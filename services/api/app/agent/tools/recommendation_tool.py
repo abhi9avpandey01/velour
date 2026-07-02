@@ -6,7 +6,7 @@ deterministic RecommendationEngine.
 """
 
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,10 +54,10 @@ class GenerateOutfitTool(BaseTool):
                     "description": "The current season."
                 }
             },
-            "required": ["occasion", "weather", "season"]
+            "required": []
         }
 
-    async def execute(self, occasion: str, weather: str, season: str, **kwargs) -> Any:
+    async def execute(self, occasion: Optional[str] = None, weather: Optional[str] = None, season: Optional[str] = None, **kwargs) -> Any:
         """Execute the deterministic Recommendation Engine."""
         rec_repo = RecommendationRepository(self.session)
         wardrobe_repo = WardrobeRepository(self.session)
@@ -67,15 +67,19 @@ class GenerateOutfitTool(BaseTool):
         
         context = RecommendationContext(
             user_id=self.user_id,
-            weather=WeatherContext(weather),
-            season=Season(season),
-            occasion=Occasion(occasion),
+            weather=WeatherContext(weather) if weather else WeatherContext.MILD,
+            season=Season(season) if season else Season.SUMMER,
+            occasion=Occasion(occasion) if occasion else Occasion.CASUAL,
             recently_worn_item_ids=recent_ids,
             prefer_favorites=True,
             include_archived=False,
         )
         
-        wardrobe_items = await wardrobe_repo.list_by_user(user_id=self.user_id, limit=500)
+        from app.schemas.wardrobe import WardrobeFilterParams
+        wardrobe_items, _ = await wardrobe_repo.list_by_user(
+            user_id=self.user_id, 
+            filters=WardrobeFilterParams(limit=100)
+        )
         
         if not wardrobe_items:
             return {"error": "The user's wardrobe is empty. Ask them to upload items first."}
@@ -94,7 +98,7 @@ class GenerateOutfitTool(BaseTool):
             for item in wardrobe_items
         ]
         
-        user_request = f"Occasion: {occasion}, Weather: {weather}, Season: {season}"
+        user_request = f"Occasion: {occasion or 'Casual'}, Weather: {weather or 'Mild'}, Season: {season or 'Summer'}"
         
         # 3. Generate Outfit via AI Service
         from app.services.ai_service import AIService

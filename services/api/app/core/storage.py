@@ -109,7 +109,7 @@ class StorageService:
         supabase.storage.from_(settings.supabase_bucket).upload(
             path=path,
             file=file_bytes,
-            file_options={"content-type": mime_type}
+            file_options={"content-type": mime_type, "x-upsert": "true"}
         )
 
         # Get public URL

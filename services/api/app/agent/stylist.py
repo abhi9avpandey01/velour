@@ -18,18 +18,21 @@ from app.core.config import settings
 from app.models.chat import ChatMessage, ChatRole, ChatSession
 
 
-SYSTEM_PROMPT = """You are the Velour AI Stylist. 
-Your goal is to help users select outfits and understand their wardrobe.
+SYSTEM_PROMPT = """You are the Velour AI Stylist, a personalized wardrobe assistant. 
+Your goal is to help users select outfits, manage their wardrobe, and understand their style.
 
 CRITICAL RULES:
-1. YOU MUST NEVER GENERATE AN OUTFIT YOURSELF. You do not know what the user owns.
-2. If the user asks for an outfit, you MUST use the `generate_outfit` tool.
-3. If the user asks what they own, you MUST use the `search_wardrobe` tool.
-4. When explaining a generated outfit, you MUST cite the exact reasons returned by the tool.
-5. NEVER invent or hallucinate items, colors, or weather conditions.
-6. Keep your responses concise, friendly, and stylish.
+1. YOU MUST NEVER GENERATE AN OUTFIT YOURSELF. You do not have direct access to image data or internal wardrobe storage without tools. 
+2. ALWAYS use the `generate_outfit` tool when the user asks for suggestions, outfits, or clothing combinations.
+3. ALWAYS use the `search_wardrobe` tool when the user asks what they own, where an item is, or for general wardrobe inquiries.
+4. When presenting an outfit:
+   - Cite the specific items returned by the tool.
+   - Explain WHY those items work together (e.g., color coordination, occasion suitability).
+   - If the output includes a reason/rationale from the tool, incorporate it into your explanation.
+5. NEVER invent items, patterns, or colors that are not present in the tool results. If you don't know, admit it politely.
+6. Tone: Be concise, encouraging, stylish, and fashion-forward. Keep responses easy to read.
 
-If a tool fails or returns no results, politely inform the user.
+If a tool fails or returns no results, be transparent, apologize, and ask the user to provide more details or try a different query.
 """
 
 class StylistAgent:
@@ -39,10 +42,10 @@ class StylistAgent:
         self.session = session
         self.user_id = user_id
         
-        # Grok uses an OpenAI-compatible API
+        # Gemini uses an OpenAI-compatible API layer
         self.client = AsyncOpenAI(
-            api_key=settings.xai_api_key,
-            base_url="https://api.x.ai/v1"
+            api_key=settings.gemini_api_key,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
         )
         self.router = ToolRouter(session, user_id)
 
@@ -103,9 +106,9 @@ class StylistAgent:
         # 2. Build History
         messages = await self.get_history(chat_session.id)
         
-        # 3. Call Grok with Tools
+        # 3. Call Gemini with Tools
         response = await self.client.chat.completions.create(
-            model="grok-2-1212",
+            model="gemini-2.5-flash",
             messages=messages,
             tools=self.router.get_openai_tools(),
             tool_choice="auto"
@@ -126,7 +129,7 @@ class StylistAgent:
             self.session.add(tool_call_msg)
             
             # We append the exact same dictionary to our local messages array so the next API call works
-            messages.append(response_message.model_dump())
+            messages.append(response_message.model_dump(exclude_none=True))
 
             for tool_call in response_message.tool_calls:
                 # Execute tool
@@ -154,9 +157,9 @@ class StylistAgent:
             # Commit all tool tracking to DB
             await self.session.commit()
 
-            # 5. Get final response from Grok now that it has the tool results
+            # 5. Get final response from Gemini now that it has the tool results
             final_response = await self.client.chat.completions.create(
-                model="grok-2-1212",
+                model="gemini-2.5-flash",
                 messages=messages,
             )
             final_content = final_response.choices[0].message.content

@@ -43,11 +43,15 @@ class SearchWardrobeTool(BaseTool):
                 "color": {
                     "type": "string",
                     "description": "Optional color filter (e.g. 'black', 'white')."
+                },
+                "query": {
+                    "type": "string",
+                    "description": "Optional keyword search for name, brand, subcategory, or notes (e.g. 'nike', 'jeans', 'striped')."
                 }
             }
         }
 
-    async def execute(self, category: str = None, color: str = None, **kwargs) -> Any:
+    async def execute(self, category: str = None, color: str = None, query: str = None, **kwargs) -> Any:
         """Search the wardrobe."""
         stmt = select(WardrobeItem).where(
             WardrobeItem.user_id == self.user_id,
@@ -59,6 +63,16 @@ class SearchWardrobeTool(BaseTool):
         if color:
             # Case insensitive match for simple colors
             stmt = stmt.where(WardrobeItem.color.ilike(f"%{color}%"))
+        if query:
+            from sqlalchemy import or_
+            stmt = stmt.where(
+                or_(
+                    WardrobeItem.name.ilike(f"%{query}%"),
+                    WardrobeItem.brand.ilike(f"%{query}%"),
+                    WardrobeItem.subcategory.ilike(f"%{query}%"),
+                    WardrobeItem.notes.ilike(f"%{query}%")
+                )
+            )
             
         stmt = stmt.limit(10) # Prevent LLM context bloat
         result = await self.session.execute(stmt)
@@ -73,7 +87,8 @@ class SearchWardrobeTool(BaseTool):
                     "id": str(item.id),
                     "category": item.category.value,
                     "color": item.color,
-                    "brand": item.brand
+                    "brand": item.brand,
+                    "name": item.name
                 }
                 for item in items
             ]
