@@ -55,3 +55,21 @@ class CLIPAdapter(BaseAdapter):
         # Convert to a flat Python list of floats
         embedding = image_features.squeeze(0).cpu().tolist()
         return embedding
+
+    def generate_text_embedding(self, text: str) -> list[float]:
+        """Generate a 512-dimensional embedding vector for text.
+
+        Args:
+            text: The query string.
+
+        Returns:
+            A list of 512 floats representing the text embedding.
+        """
+        inputs = self.processor(text=[text], return_tensors="pt", padding=True).to(self.device)
+        
+        with torch.no_grad():
+            text_features = self.model.get_text_features(**inputs)
+            
+        text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
+        embedding = text_features.squeeze(0).cpu().tolist()
+        return embedding

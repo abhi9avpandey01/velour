@@ -109,6 +109,7 @@ class VisionService:
                 existing_metadata.embedding = embedding
                 existing_metadata.image_caption = attributes.get("description")
                 existing_metadata.category_attr = {"value": attributes.get("category"), "confidence": conf}
+                existing_metadata.subcategory_attr = {"value": attributes.get("subcategory"), "confidence": conf}
                 existing_metadata.primary_color = {"value": attributes.get("color"), "confidence": conf}
                 existing_metadata.material = {"value": attributes.get("material", "Unknown"), "confidence": conf}
                 existing_metadata.pattern = {"value": attributes.get("pattern"), "confidence": conf}
@@ -121,6 +122,7 @@ class VisionService:
                     embedding=embedding,
                     image_caption=attributes.get("description"),
                     category_attr={"value": attributes.get("category"), "confidence": conf},
+                    subcategory_attr={"value": attributes.get("subcategory"), "confidence": conf},
                     primary_color={"value": attributes.get("color"), "confidence": conf},
                     material={"value": attributes.get("material", "Unknown"), "confidence": conf},
                     pattern={"value": attributes.get("pattern"), "confidence": conf},
@@ -134,7 +136,9 @@ class VisionService:
             if attributes.get("color"):
                 item.color = attributes.get("color")
             if attributes.get("category"):
-                item.subcategory = attributes.get("category")
+                item.category = attributes.get("category")
+            if attributes.get("subcategory"):
+                item.subcategory = attributes.get("subcategory")
                 
             item.thumbnail_url = processed_url
             self.session.add(item)

@@ -82,7 +82,7 @@ class AIService:
             generation_config={"response_mime_type": "application/json", "temperature": 0.0}
         )
         
-        required_keys = ["category", "color", "pattern", "style", "description", "confidence"]
+        required_keys = ["category", "subcategory", "color", "pattern", "style", "description", "confidence"]
         
         for attempt in range(2):
             try:
@@ -95,6 +95,7 @@ class AIService:
                 # Store only normalized data
                 normalized = {
                     "category": str(validated_data["category"]).strip().title(),
+                    "subcategory": str(validated_data["subcategory"]).strip().title(),
                     "color": str(validated_data["color"]).strip().lower(),
                     "pattern": str(validated_data["pattern"]).strip().lower(),
                     "style": str(validated_data["style"]).strip().title(),
@@ -111,6 +112,7 @@ class AIService:
                     logger.error("Final attempt failed. Returning fallback data.", exc_info=True)
                     return {
                         "category": "Unknown",
+                        "subcategory": "Unknown",
                         "color": "unknown",
                         "pattern": "unknown",
                         "style": "Unknown",

@@ -143,6 +143,19 @@ export function useDeleteItem() {
   });
 }
 
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const res = await api.post(`/wardrobe/${itemId}/favorite`);
+      return res.data.data as WardrobeItem;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wardrobe"] });
+    },
+  });
+}
+
 // --- Auth Mutations ---
 export function useLogin() {
   return useMutation({

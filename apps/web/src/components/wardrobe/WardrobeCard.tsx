@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { WardrobeItem, useAnalyzeImage, useDeleteItem } from "@/lib/queries";
+import { WardrobeItem, useAnalyzeImage, useDeleteItem, useToggleFavorite } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 export function WardrobeCard({ item }: { item: WardrobeItem }) {
   const analyzeMutation = useAnalyzeImage();
   const deleteMutation = useDeleteItem();
+  const toggleFavoriteMutation = useToggleFavorite();
   const [modalOpen, setModalOpen] = useState(false);
   const [stylingAdvice, setStylingAdvice] = useState<string | null>(null);
 
@@ -52,8 +53,21 @@ export function WardrobeCard({ item }: { item: WardrobeItem }) {
               variant="ghost" 
               size="icon" 
               className="bg-white/60 backdrop-blur hover:bg-white shadow-sm"
+              onClick={(e) => {
+                e.preventDefault();
+                toggleFavoriteMutation.mutate(item.id, {
+                  onSuccess: () => toast.success(item.favorite ? "Removed from favorites." : "Added to favorites."),
+                  onError: () => toast.error("Failed to update favorite status.")
+                });
+              }}
+              disabled={toggleFavoriteMutation.isPending}
+              title={item.favorite ? "Unfavorite" : "Favorite"}
             >
-              <Heart className={`h-5 w-5 ${item.favorite ? "fill-red-500 text-red-500" : "text-zinc-600"}`} />
+              {toggleFavoriteMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Heart className={`h-5 w-5 ${item.favorite ? "fill-red-500 text-red-500" : "text-zinc-600"}`} />
+              )}
             </Button>
 
             <Button

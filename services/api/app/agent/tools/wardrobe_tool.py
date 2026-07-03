@@ -53,26 +53,39 @@ class SearchWardrobeTool(BaseTool):
 
     async def execute(self, category: str = None, color: str = None, query: str = None, **kwargs) -> Any:
         """Search the wardrobe."""
-        stmt = select(WardrobeItem).where(
-            WardrobeItem.user_id == self.user_id,
-            WardrobeItem.is_deleted == False
-        )
-        
-        if category:
-            stmt = stmt.where(WardrobeItem.category == Category(category))
-        if color:
-            # Case insensitive match for simple colors
-            stmt = stmt.where(WardrobeItem.color.ilike(f"%{color}%"))
         if query:
-            from sqlalchemy import or_
-            stmt = stmt.where(
-                or_(
-                    WardrobeItem.name.ilike(f"%{query}%"),
-                    WardrobeItem.brand.ilike(f"%{query}%"),
-                    WardrobeItem.subcategory.ilike(f"%{query}%"),
-                    WardrobeItem.notes.ilike(f"%{query}%")
+            from app.models.wardrobe_metadata import WardrobeMetadata
+            from app.ai.adapters.clip_adapter import CLIPAdapter
+            
+            adapter = CLIPAdapter()
+            embedding = adapter.generate_text_embedding(query)
+            
+            stmt = (
+                select(WardrobeItem)
+                .join(WardrobeMetadata, WardrobeItem.id == WardrobeMetadata.wardrobe_item_id)
+                .where(
+                    WardrobeItem.user_id == self.user_id,
+                    WardrobeItem.is_deleted == False
                 )
             )
+            
+            if category:
+                stmt = stmt.where(WardrobeItem.category == Category(category))
+            if color:
+                stmt = stmt.where(WardrobeItem.color.ilike(f"%{color}%"))
+                
+            stmt = stmt.order_by(WardrobeMetadata.embedding.l2_distance(embedding))
+        else:
+            stmt = select(WardrobeItem).where(
+                WardrobeItem.user_id == self.user_id,
+                WardrobeItem.is_deleted == False
+            )
+            
+            if category:
+                stmt = stmt.where(WardrobeItem.category == Category(category))
+            if color:
+                # Case insensitive match for simple colors
+                stmt = stmt.where(WardrobeItem.color.ilike(f"%{color}%"))
             
         stmt = stmt.limit(10) # Prevent LLM context bloat
         result = await self.session.execute(stmt)
