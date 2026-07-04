@@ -4,13 +4,14 @@ Velour API — Unified AI Service using Google Gemini.
 Handles vision extraction and outfit recommendation.
 """
 
+import base64
 import io
 import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
-import google.generativeai as genai
+import httpx
 from PIL import Image
 
 from app.core.config import settings
@@ -25,9 +26,9 @@ class AIService:
         if not settings.gemini_api_key or settings.gemini_api_key == "gemini-placeholder":
             logger.warning("Gemini API key is missing or set to placeholder.")
         
-        genai.configure(api_key=settings.gemini_api_key)
         # We use gemini-2.5-flash which supports both vision and text tasks well and has free tier quota.
         self.model_name = "gemini-2.5-flash"
+        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
         
         # Determine paths to prompt files relative to this file
         base_dir = Path(__file__).parent.parent
@@ -77,20 +78,60 @@ class AIService:
             logger.error(f"Failed to load image for analysis: {e}")
             raise ValueError("Invalid image bytes provided.") from e
 
-        model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config={"response_mime_type": "application/json", "temperature": 0.0}
-        )
-        
+        # Base64 encode the JPEG image
+        try:
+            buffered = io.BytesIO()
+            image.save(buffered, format="JPEG")
+            img_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        except Exception as e:
+            logger.error(f"Failed to convert image to JPEG: {e}")
+            raise ValueError("Could not process image.") from e
+
         required_keys = ["category", "subcategory", "color", "pattern", "style", "description", "confidence"]
         
         for attempt in range(2):
             try:
-                response = model.generate_content([prompt, image])
-                if not response.text:
-                    raise ValueError("Empty response from Gemini.")
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": prompt},
+                                {
+                                    "inlineData": {
+                                        "mimeType": "image/jpeg",
+                                        "data": img_b64
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "generationConfig": {
+                        "responseMimeType": "application/json",
+                        "temperature": 0.0
+                    }
+                }
+                
+                response = httpx.post(
+                    self.api_url,
+                    params={"key": settings.gemini_api_key},
+                    json=payload,
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                response_json = response.json()
+                
+                if "candidates" not in response_json or not response_json["candidates"]:
+                    raise ValueError(f"Empty response candidates from Gemini: {response_json}")
                     
-                validated_data = self._parse_and_validate_json(response.text, required_keys)
+                candidate = response_json["candidates"][0]
+                if "content" not in candidate or "parts" not in candidate["content"] or not candidate["content"]["parts"]:
+                    raise ValueError(f"No content parts in candidate: {candidate}")
+                    
+                response_text = candidate["content"]["parts"][0].get("text", "")
+                if not response_text:
+                    raise ValueError("Empty text response from Gemini.")
+                    
+                validated_data = self._parse_and_validate_json(response_text, required_keys)
                 
                 # Store only normalized data
                 normalized = {
@@ -139,20 +180,45 @@ class AIService:
         
         full_prompt = f"{prompt}\n\nUSER REQUEST:\n{userRequest}\n\nWARDROBE:\n{wardrobe_json}"
         
-        model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config={"response_mime_type": "application/json", "temperature": 0.2}
-        )
-        
         required_keys = ["top_id", "bottom_id", "shoe_id", "reason"]
         
         for attempt in range(2):
             try:
-                response = model.generate_content(full_prompt)
-                if not response.text:
-                    raise ValueError("Empty response from Gemini.")
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": full_prompt}
+                            ]
+                        }
+                    ],
+                    "generationConfig": {
+                        "responseMimeType": "application/json",
+                        "temperature": 0.2
+                    }
+                }
+                
+                response = httpx.post(
+                    self.api_url,
+                    params={"key": settings.gemini_api_key},
+                    json=payload,
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                response_json = response.json()
+                
+                if "candidates" not in response_json or not response_json["candidates"]:
+                    raise ValueError(f"Empty response candidates from Gemini: {response_json}")
                     
-                validated_data = self._parse_and_validate_json(response.text, required_keys)
+                candidate = response_json["candidates"][0]
+                if "content" not in candidate or "parts" not in candidate["content"] or not candidate["content"]["parts"]:
+                    raise ValueError(f"No content parts in candidate: {candidate}")
+                    
+                response_text = candidate["content"]["parts"][0].get("text", "")
+                if not response_text:
+                    raise ValueError("Empty text response from Gemini.")
+                    
+                validated_data = self._parse_and_validate_json(response_text, required_keys)
                 
                 # Store only normalized data
                 normalized = {
@@ -173,3 +239,4 @@ class AIService:
                 raise
                 
         raise RuntimeError("Unreachable")
+
