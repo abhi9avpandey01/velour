@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/lib/queries";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shirt, Upload, Home, LogOut, Loader2, MessageSquare } from "lucide-react";
+import { Shirt, Upload, Home, LogOut, Loader2, MessageSquare, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: currentUser } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="flex min-h-screen w-full bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex min-h-screen w-full bg-transparent">
       {/* Sidebar */}
       <aside className="w-64 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hidden md:block">
         <div className="flex h-16 items-center px-6 border-b border-zinc-200 dark:border-zinc-800">
@@ -81,13 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {currentUser ? `Welcome, ${currentUser.username}` : "Welcome"}
           </h2>
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              Toggle Theme
-            </Button>
+
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
