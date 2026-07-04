@@ -1,4 +1,7 @@
 #!/bin/bash
+# Run database migrations
+alembic upgrade head
+
 # Start Celery background worker
 celery -A app.worker.celery_app worker --loglevel=info &
 
