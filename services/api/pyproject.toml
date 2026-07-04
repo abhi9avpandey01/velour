@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "app" }]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.10,<3.13"
 fastapi = "^0.115.0"
 uvicorn = { version = "^0.32.0", extras = ["standard"] }
 pydantic = { version = "^2.10.0", extras = ["email"] }
@@ -24,8 +24,8 @@ python-jose = { version = "^3.3.0", extras = ["cryptography"] }
 slowapi = "^0.1.9"
 supabase = "^2.10.0"
 pillow = "^11.0.0"
-torch = "^2.5.1"
-torchvision = "^0.20.1"
+torch = { version = "^2.5.1", source = "pytorch-cpu" }
+torchvision = { version = "^0.20.1", source = "pytorch-cpu" }
 transformers = "^4.46.2"
 rembg = "^2.0.60"
 pgvector = "^0.3.6"
@@ -73,3 +73,8 @@ python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
