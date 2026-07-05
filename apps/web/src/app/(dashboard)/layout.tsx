@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen w-full bg-transparent">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hidden md:block">
+      <aside className="w-64 border-r-2 border-dashed border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900 hidden md:block">
         <div className="flex h-16 items-center px-6 border-b border-zinc-200 dark:border-zinc-800">
           <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">Velour</h1>
         </div>
