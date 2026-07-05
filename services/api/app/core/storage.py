@@ -115,3 +115,44 @@ class StorageService:
         # Get public URL
         public_url = supabase.storage.from_(settings.supabase_bucket).get_public_url(path)
         return public_url
+
+    @staticmethod
+    def upload_profile_picture(
+        user_id: uuid.UUID,
+        file_obj: IO[bytes],
+        mime_type: str,
+    ) -> str:
+        """Upload a profile picture to Supabase Storage.
+
+        Constructs the path: users/{userId}/profile_picture.{ext}
+
+        Args:
+            user_id: The owner of the image.
+            file_obj: The file stream.
+            mime_type: The validated mime type.
+
+        Returns:
+            The public URL of the uploaded image with cache-busting timestamp.
+        """
+        import time
+        ext = "jpg"
+        if mime_type == "image/png":
+            ext = "png"
+        elif mime_type == "image/webp":
+            ext = "webp"
+
+        path = f"users/{user_id}/profile_picture.{ext}"
+
+        file_obj.seek(0)
+        file_bytes = file_obj.read()
+
+        # Upload to Supabase
+        supabase.storage.from_(settings.supabase_bucket).upload(
+            path=path,
+            file=file_bytes,
+            file_options={"content-type": mime_type, "x-upsert": "true"}
+        )
+
+        # Get public URL and append cache bust
+        public_url = supabase.storage.from_(settings.supabase_bucket).get_public_url(path)
+        return f"{public_url}?t={int(time.time())}"

@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/lib/queries";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shirt, Upload, Home, LogOut, Loader2, MessageSquare, Sun, Moon } from "lucide-react";
+import { Shirt, Upload, Home, LogOut, Loader2, MessageSquare, Sun, Moon, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
@@ -19,10 +19,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     setMounted(true);
-    if (!token) {
+    const actualToken = useAuthStore.getState().token;
+    if (!actualToken) {
       router.push("/login");
     }
-  }, [token, router]);
+  }, [router]);
 
   if (!mounted || !token) {
     return (
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Wardrobe", href: "/wardrobe", icon: Shirt },
     { name: "Stylist", href: "/stylist", icon: MessageSquare },
     { name: "Upload", href: "/upload", icon: Upload },
+    { name: "Profile", href: "/profile", icon: User },
   ];
 
   return (

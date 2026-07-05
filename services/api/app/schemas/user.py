@@ -73,6 +73,12 @@ class UserUpdate(BaseModel):
     All fields are optional — only provided fields are updated.
     """
 
+    username: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=100,
+        description="Unique username (3-100 characters, alphanumeric and underscores).",
+    )
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
     profile_picture_url: str | None = Field(default=None)
@@ -80,6 +86,17 @@ class UserUpdate(BaseModel):
     date_of_birth: date | None = Field(default=None)
     timezone: str | None = Field(default=None, max_length=50)
     preferred_language: str | None = Field(default=None, max_length=10)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str | None) -> str | None:
+        """Validate that username contains only allowed characters."""
+        if value is None:
+            return None
+        if not re.match(r"^[a-zA-Z0-9_]+$", value):
+            msg = "Username must contain only letters, numbers, and underscores."
+            raise ValueError(msg)
+        return value.lower()
 
     @field_validator("gender")
     @classmethod
