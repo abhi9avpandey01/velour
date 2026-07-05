@@ -1,19 +1,20 @@
 """
 Velour API — Background Removal Adapter.
 
-Uses the 'rembg' library to remove backgrounds from images.
+Uses the external Remove.bg API to remove backgrounds from images.
 """
 
-import io
-
-from PIL import Image
-import rembg
+import logging
+import requests
 
 from app.ai.adapters.base import BaseAdapter
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class BackgroundRemovalAdapter(BaseAdapter):
-    """Adapter for removing backgrounds from clothing images."""
+    """Adapter for removing backgrounds from clothing images via Remove.bg."""
 
     def remove_background(self, image_bytes: bytes) -> bytes:
         """Process an image and return it with a transparent background.
@@ -24,12 +25,26 @@ class BackgroundRemovalAdapter(BaseAdapter):
         Returns:
             The raw bytes of the processed PNG image.
         """
-        input_image = Image.open(io.BytesIO(image_bytes))
-        
-        # rembg automatically downloads its u2net models on first run
-        output_image = rembg.remove(input_image)
-        
-        output_buffer = io.BytesIO()
-        output_image.save(output_buffer, format="PNG")
-        
-        return output_buffer.getvalue()
+        api_key = settings.remove_bg_api_key
+        if not api_key or api_key == "removebg-placeholder" or api_key == "your-removebg-api-key":
+            logger.warning("Remove.bg API key not found. Returning original image.")
+            return image_bytes
+
+        try:
+            response = requests.post(
+                'https://api.remove.bg/v1.0/removebg',
+                files={'image_file': image_bytes},
+                data={'size': 'auto'},
+                headers={'X-Api-Key': api_key},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return response.content
+            else:
+                logger.error(f"Remove.bg failed: {response.status_code} {response.text}")
+                # Fallback to returning the original image if the API fails
+                return image_bytes
+        except Exception as e:
+            logger.error(f"Error calling Remove.bg API: {e}")
+            return image_bytes

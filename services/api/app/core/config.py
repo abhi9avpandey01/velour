@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     # ── Google Gemini ─────────────────────────────
     gemini_api_key: str = "gemini-placeholder"
 
+    # ── External AI Services ──────────────────────
+    remove_bg_api_key: str = "removebg-placeholder"
+    hf_api_token: str = "hf-placeholder"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
