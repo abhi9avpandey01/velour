@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # ── Server ────────────────────────────────────
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    api_cors_origins: str = "http://localhost:3000"
+    api_cors_origins: str = "http://localhost:3000,https://velour-web-6gnz.vercel.app"
 
     # ── Database (PostgreSQL) ─────────────────────
     database_url: str = "postgresql+asyncpg://velour:velour_secret@postgres:5432/velour"
