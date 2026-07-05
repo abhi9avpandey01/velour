@@ -7,7 +7,10 @@ and event publishing to the Celery queue.
 
 import logging
 import uuid
-from typing import IO
+from typing import TYPE_CHECKING, IO
+
+if TYPE_CHECKING:
+    from fastapi import BackgroundTasks
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +33,7 @@ class ImageService:
         user_id: uuid.UUID,
         file_obj: IO[bytes],
         filename: str,
+        background_tasks: "BackgroundTasks",
     ) -> dict[str, str]:
         """Process an image upload, create pending records, and trigger worker.
 
@@ -104,8 +108,8 @@ class ImageService:
         logger.info(f"Image uploaded and saved with asset_id {asset.id}")
 
         # 6. Trigger background worker for AI processing
-        from app.worker.tasks import process_image_upload
-        process_image_upload.delay(str(asset.id))
+        from app.worker.tasks import process_image_background
+        background_tasks.add_task(process_image_background, str(asset.id))
 
         return {
             "item_id": str(item_id),
