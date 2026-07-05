@@ -38,13 +38,12 @@ velour/
 ├── services/
 │   └── api/                  # FastAPI backend
 ├── packages/
-│   └── types/                # @velour/types — shared TypeScript types
+│   ├── config/               # Shared configurations
+│   ├── types/                # Shared TypeScript types
+│   └── ui/                   # Shared UI components
 ├── docs/                     # Documentation
-├── infra/
-│   └── docker/               # Docker configs (Postgres init, Nginx)
 ├── .github/
 │   └── workflows/ci.yml      # GitHub Actions CI
-├── docker-compose.yml        # Local development orchestration
 └── package.json              # Root workspace config
 ```
 
@@ -81,30 +80,19 @@ cp .env.example .env
 pnpm install
 ```
 
-### 4. Start everything with Docker Compose
+### 4. Start Development Servers
 
 ```bash
-docker compose up
+pnpm dev
 ```
 
-This starts all services:
-
-| Service      | URL                        |
-| ------------ | -------------------------- |
-| **Frontend** | http://localhost:3000       |
-| **API**      | http://localhost:8000       |
-| **API Docs** | http://localhost:8000/docs  |
-| **Postgres** | `localhost:5432`           |
-| **Redis**    | `localhost:6379`           |
-
-### 5. (Alternative) Run services individually
+### 5. Run services individually
 
 ```bash
 # Frontend only
 pnpm dev:web
 
-# API only (requires Docker for Postgres/Redis)
-docker compose up postgres redis -d
+# API only
 cd services/api
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
@@ -118,17 +106,13 @@ uvicorn app.main:app --reload --port 8000
 | ------------------- | ------------------------------------------ |
 | `pnpm dev`          | Start all dev servers in parallel           |
 | `pnpm dev:web`      | Start Next.js dev server                    |
-| `pnpm dev:api`      | Start FastAPI via Docker                    |
 | `pnpm build`        | Build all packages and apps                 |
-| `pnpm lint`         | Run ESLint across the workspace             |
-| `pnpm lint:fix`     | Run ESLint with auto-fix                    |
-| `pnpm format`       | Format all files with Prettier              |
-| `pnpm format:check` | Check formatting without modifying files    |
+| `pnpm build:web`    | Build web application                       |
+| `pnpm build:types`  | Build types package                         |
+| `pnpm build:ui`     | Build ui package                            |
+| `pnpm build:config` | Build config package                        |
+| `pnpm lint`         | Run ESLint across the web app               |
 | `pnpm typecheck`    | Run TypeScript type checking                |
-| `pnpm docker:up`    | Start Docker Compose (detached)             |
-| `pnpm docker:down`  | Stop Docker Compose                         |
-| `pnpm docker:build` | Build Docker images                         |
-| `pnpm docker:logs`  | Follow Docker Compose logs                  |
 
 ---
 
