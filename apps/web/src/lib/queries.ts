@@ -88,9 +88,7 @@ export function useUploadImage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await api.post("/wardrobe/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await api.post("/wardrobe/upload", formData);
       // Backend returns ApiResponse<{ item_id, asset_id, processing_status }>
       return res.data.data as { item_id: string; asset_id: string; processing_status: string };
     },
@@ -197,9 +195,7 @@ export function useUploadAvatar() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await api.post("/users/me/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await api.post("/users/me/avatar", formData);
       return res.data.data as UserProfile;
     },
     onSuccess: () => {
