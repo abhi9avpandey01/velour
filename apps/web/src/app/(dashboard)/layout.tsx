@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Shirt, Upload, Home, LogOut, Loader2, MessageSquare, Sun, Moon, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { token, logout } = useAuthStore();
@@ -16,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -96,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
               )}
             </Link>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
+            <Button variant="outline" size="sm" onClick={() => setIsLogoutModalOpen(true)}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -108,6 +110,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      <Modal open={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} title="Confirm Logout">
+        <div className="space-y-4">
+          <p className="text-zinc-300">Are you sure you want to log out?</p>
+          <div className="flex justify-end space-x-3 pt-2">
+            <Button variant="outline" onClick={() => setIsLogoutModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
