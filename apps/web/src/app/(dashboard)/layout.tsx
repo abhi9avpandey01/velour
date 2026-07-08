@@ -83,17 +83,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {currentUser ? `Welcome, ${currentUser.username}` : "Welcome"}
           </h2>
           <div className="flex items-center space-x-4">
-            {currentUser?.profile_picture_url ? (
-              <img
-                src={currentUser.profile_picture_url}
-                alt="Profile"
-                className="h-8 w-8 rounded-full object-cover border border-zinc-200 dark:border-zinc-800"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800">
-                <User className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-              </div>
-            )}
+            <Link href="/profile" className="transition-opacity hover:opacity-80">
+              {currentUser?.profile_picture_url ? (
+                <img
+                  src={currentUser.profile_picture_url}
+                  alt="Profile"
+                  className="h-8 w-8 rounded-full object-cover border border-zinc-200 dark:border-zinc-800"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800">
+                  <User className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                </div>
+              )}
+            </Link>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
