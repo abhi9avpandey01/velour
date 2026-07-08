@@ -6,9 +6,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://velour-bfz1.onrender
 
 export const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Add a request interceptor to attach the JWT token
