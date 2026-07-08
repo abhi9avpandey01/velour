@@ -45,7 +45,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center p-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center p-4">
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">Velour</h1>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
