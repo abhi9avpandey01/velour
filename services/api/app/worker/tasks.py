@@ -11,7 +11,6 @@ import time
 from app.db.session import async_session_factory
 from app.models.enums import AIStatus, ProcessingStatus
 from app.models.image_asset import ImageAsset
-from app.worker.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
