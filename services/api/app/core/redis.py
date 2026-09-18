@@ -58,8 +58,11 @@ async def blacklist_token(jti: str, expires_in: int) -> None:
         jti: The unique JWT token identifier (jti claim).
         expires_in: Time in seconds until the blacklist entry expires.
     """
-    client = await get_redis_client()
-    await client.setex(f"token_blacklist:{jti}", expires_in, "1")
+    try:
+        client = await get_redis_client()
+        await client.setex(f"token_blacklist:{jti}", expires_in, "1")
+    except Exception:
+        pass
 
 
 async def is_token_blacklisted(jti: str) -> bool:
@@ -71,6 +74,9 @@ async def is_token_blacklisted(jti: str) -> bool:
     Returns:
         True if the token is blacklisted (revoked), False otherwise.
     """
-    client = await get_redis_client()
-    result = await client.get(f"token_blacklist:{jti}")
-    return result is not None
+    try:
+        client = await get_redis_client()
+        result = await client.get(f"token_blacklist:{jti}")
+        return result is not None
+    except Exception:
+        return False
