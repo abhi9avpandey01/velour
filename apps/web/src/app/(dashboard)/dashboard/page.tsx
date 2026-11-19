@@ -8,7 +8,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { data: items, isLoading, isError } = useWardrobe();
+  const { data: items, isLoading, isError, refetch } = useWardrobe();
   const deleteMutation = useDeleteItem();
 
   if (isLoading) {
@@ -19,7 +19,15 @@ export default function DashboardPage() {
   }
 
   if (isError) {
-    return <div className="text-red-500">Failed to load dashboard data.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg text-center space-y-3">
+        <p className="text-red-500 font-medium">Failed to load dashboard data.</p>
+        <p className="text-sm text-zinc-500">Please make sure the backend server is running and your session is active.</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   const totalItems = items?.length || 0;

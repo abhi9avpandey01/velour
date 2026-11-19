@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!actualToken) {
       router.push("/login");
     }
-  }, [router]);
+  }, [token, router]);
 
   if (!mounted || !token) {
     return (
