@@ -1,8 +1,11 @@
 import axios from "axios";
 import { useAuthStore } from "./auth-store";
 
-// Assuming the API is running locally via Docker Compose or on localhost:8000
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://velour-bfz1.onrender.com/api/v1";
+// Normalize API_URL so it always points to the versioned API base (ends with /api/v1)
+const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const API_URL = rawUrl.endsWith("/api/v1")
+  ? rawUrl
+  : `${rawUrl.replace(/\/+$/, "")}/api/v1`;
 
 export const api = axios.create({
   baseURL: API_URL,

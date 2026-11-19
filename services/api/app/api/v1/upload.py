@@ -6,20 +6,17 @@ image processing to a background worker queue.
 """
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Request, UploadFile
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.core.config import settings
 from app.db.session import get_db_session
+from app.middleware.rate_limit import limiter
 from app.models.user import User
 from app.schemas.common import ApiResponse
 from app.services.image_service import ImageService
 
 router = APIRouter(prefix="/wardrobe", tags=["Wardrobe"])
-
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(

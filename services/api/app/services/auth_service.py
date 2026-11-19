@@ -99,11 +99,11 @@ class AuthService:
     async def login(self, email: str, password: str) -> TokenResponse:
         """Authenticate a user and issue JWT tokens.
 
-        Verifies the email and password, updates the last login timestamp,
+        Verifies the email (or username) and password, updates the last login timestamp,
         and returns an access/refresh token pair.
 
         Args:
-            email: The user's email address.
+            email: The user's email address or username.
             password: The user's plaintext password.
 
         Returns:
@@ -112,7 +112,13 @@ class AuthService:
         Raises:
             AuthenticationError: If the credentials are invalid or the account is inactive.
         """
-        user = await self._repo.get_by_email(email.lower())
+        clean_identifier = email.strip().lower()
+        if "@" in clean_identifier:
+            user = await self._repo.get_by_email(clean_identifier)
+        else:
+            user = await self._repo.get_by_username(clean_identifier)
+            if user is None:
+                user = await self._repo.get_by_email(clean_identifier)
 
         if user is None:
             raise AuthenticationError(

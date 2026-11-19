@@ -11,11 +11,27 @@ from slowapi.util import get_remote_address
 
 from app.core.config import settings
 
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=[settings.rate_limit_general],
-    storage_uri=settings.redis_url,
-)
+def _create_limiter() -> Limiter:
+    """Create Limiter with Redis storage if available, falling back to memory."""
+    try:
+        from limits.storage import storage_from_string
+        storage = storage_from_string(settings.redis_url)
+        if storage.check():
+            return Limiter(
+                key_func=get_remote_address,
+                default_limits=[settings.rate_limit_general],
+                storage_uri=settings.redis_url,
+            )
+    except Exception:
+        pass
+    return Limiter(
+        key_func=get_remote_address,
+        default_limits=[settings.rate_limit_general],
+        storage_uri="memory://",
+    )
+
+
+limiter = _create_limiter()
 
 
 def setup_rate_limiting(app):  # type: ignore[no-untyped-def]

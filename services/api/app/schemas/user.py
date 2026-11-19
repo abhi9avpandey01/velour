@@ -55,16 +55,16 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    """Schema for user login."""
+    """Schema for user login (supports email or username)."""
 
-    email: EmailStr = Field(..., description="User's email address.")
+    email: str = Field(..., min_length=1, description="User's email address or username.")
     password: str = Field(..., description="User's password.")
 
     @field_validator("email")
     @classmethod
     def normalize_email(cls, value: str) -> str:
-        """Normalize email to lowercase."""
-        return value.lower()
+        """Normalize login identifier to lowercase."""
+        return value.strip().lower()
 
 
 class UserUpdate(BaseModel):

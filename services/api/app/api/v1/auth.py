@@ -8,13 +8,12 @@ POST /api/v1/auth/refresh   — Exchange a refresh token for new tokens
 """
 
 from fastapi import APIRouter, Depends, Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, oauth2_scheme
 from app.core.config import settings
 from app.db.session import get_db_session
+from app.middleware.rate_limit import limiter
 from app.models.user import User
 from app.schemas.auth import RefreshTokenRequest, TokenResponse
 from app.schemas.common import ApiResponse
@@ -22,8 +21,6 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(

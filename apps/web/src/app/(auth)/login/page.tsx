@@ -58,11 +58,11 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Email</Label>
+              <Label htmlFor="username">Email or Username</Label>
               <Input 
                 id="username" 
-                type="email" 
-                placeholder="email@example.com"
+                type="text" 
+                placeholder="email@example.com or username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
