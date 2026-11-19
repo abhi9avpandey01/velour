@@ -29,8 +29,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!mounted || !token) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex h-screen w-full items-center justify-center" suppressHydrationWarning>
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-800 dark:border-zinc-700 dark:border-t-zinc-200"
+          suppressHydrationWarning
+        />
       </div>
     );
   }
